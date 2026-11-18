@@ -302,6 +302,13 @@ mkdirSync(OUTPUT_DIR, { recursive: true });
 const inputs = readdirSync(INPUT_DIR).filter((f) => f.endsWith('.in')).sort();
 for (const file of inputs) {
   const id = file.slice(0, -'.in'.length);
-  const c = JSON.parse(readFileSync(join(INPUT_DIR, file), 'utf8')) as Case;
+  let c: Case;
+  try {
+    c = JSON.parse(readFileSync(join(INPUT_DIR, file), 'utf8')) as Case;
+  } catch (err) {
+    // One unreadable case must not sink the whole run: report it and move on.
+    console.error(`skipping unreadable case ${file}: ${(err as Error).message}`);
+    continue;
+  }
   writeFileSync(join(OUTPUT_DIR, `${id}.out`), `${JSON.stringify(forecastCase(c))}\n`);
 }
